@@ -1,35 +1,45 @@
 package com.sebastian_daschner.coffee_shop.boundary;
 
+import com.sebastian_daschner.coffee_shop.entity.CoffeeType;
 import com.sebastian_daschner.coffee_shop.entity.Order;
-import com.sebastian_daschner.coffee_shop.entity.OrderStatus;
+import com.sebastian_daschner.coffee_shop.entity.Origin;
 
 import javax.ejb.Stateless;
-import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
-
-import static java.util.Arrays.asList;
+import java.util.stream.Collectors;
 
 @Stateless
 public class CoffeeShop {
 
-    public List<String> getCoffeeTypes() {
-        return asList("Espresso", "Pour-over");
+    @PersistenceContext
+    EntityManager entityManager;
+
+    public Set<CoffeeType> getCoffeeTypes() {
+        return EnumSet.of(CoffeeType.ESPRESSO, CoffeeType.LATTE, CoffeeType.POUR_OVER);
     }
 
-    public List<String> getOrigins(final String type) {
-        return asList("Colombia", "El Salvador");
+    public Origin getOrigin(String name) {
+        return entityManager.find(Origin.class, name);
     }
 
-    public void createOrder(final Order order) {
-        order.setId(UUID.randomUUID().toString());
-        System.out.println("order = " + order);
+    public Order getOrder(UUID id) {
+        return entityManager.find(Order.class, id.toString());
     }
 
-    public Order getOrder(final String id) {
-        return new Order(id, "Espresso", "Colombia", OrderStatus.FINISHED);
+    public Set<Origin> getOrigins(final CoffeeType type) {
+        return entityManager.createNamedQuery(Origin.FIND_ALL, Origin.class)
+                .getResultList().stream()
+                .filter(t -> t.getCoffeeTypes().contains(type))
+                .collect(Collectors.toSet());
     }
 
-    public void updateOrder(final String id, final Order order) {
-        System.out.println("updated: " + order + " with id: " + id);
+    public void createOrder(Order order) {
+        entityManager.merge(order);
+        entityManager.flush();
     }
+
 }

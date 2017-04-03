@@ -1,41 +1,36 @@
-package com.sebastian_daschner.coffee_shop.boundary;
+package com.sebastian_daschner.coffee_shop.control;
 
+import com.sebastian_daschner.coffee_shop.boundary.OrdersResource;
+import com.sebastian_daschner.coffee_shop.boundary.TypesResource;
+import com.sebastian_daschner.coffee_shop.entity.CoffeeType;
 import com.sebastian_daschner.coffee_shop.entity.Order;
-import com.sebastian_daschner.coffee_shop.entity.OrderStatus;
+import com.sebastian_daschner.coffee_shop.entity.Origin;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.UUID;
 
 public class EntityBuilder {
 
-    public JsonObject buildOrder(final Order order, final UriInfo uriInfo) {
-        final URI orderUri = uriInfo.getBaseUriBuilder().path(OrdersResource.class).path(OrdersResource.class, "getOrder").build(order.getId());
-        final JsonObjectBuilder builder = Json.createObjectBuilder()
-                .add("type", order.getType())
-                .add("origin", order.getOrigin())
-                .add("status", order.getStatus().name().toLowerCase());
-
-        if (order.getStatus() != OrderStatus.COLLECTED)
-            builder.add("_actions", Json.createObjectBuilder()
-                    .add("collect-coffee", Json.createObjectBuilder()
-                            .add("method", "PUT")
-                            .add("href", orderUri.toString())
-                            .add("fields", Json.createArrayBuilder()
-                                    .add(Json.createObjectBuilder()
-                                            .add("name", "status").add("value", "collected")
-                                    ).add(Json.createObjectBuilder()
-                                            .add("name", "type").add("value", order.getType()))
-                                    .add(Json.createObjectBuilder()
-                                            .add("name", "origin").add("value", order.getOrigin()))
-                            )));
-
-        return builder.build();
+    public JsonObject buildOrder(Order order) {
+        return Json.createObjectBuilder()
+                .add("type", capitalize(order.getType().name()))
+                .add("origin", order.getOrigin().getName())
+                .add("status", capitalize(order.getStatus().name()))
+                .build();
     }
 
-    public JsonObject buildIndex(final UriInfo uriInfo) {
+    public Order buildOrder(JsonObject json) {
+        final CoffeeType type = CoffeeType.fromString(json.getString("type"));
+        final Origin origin = new Origin(json.getString("origin"));
+
+        return new Order(UUID.randomUUID(), type, origin);
+    }
+
+    public JsonObject buildIndex(UriInfo uriInfo) {
         final URI typesUri = uriInfo.getBaseUriBuilder().path(TypesResource.class).build();
         final URI ordersUri = uriInfo.getBaseUriBuilder().path(OrdersResource.class).build();
         return Json.createObjectBuilder()
@@ -57,10 +52,10 @@ public class EntityBuilder {
                 .build();
     }
 
-    public JsonObject buildOrigin(final UriInfo uriInfo, final String origin, final String type) {
+    public JsonObject buildOrigin(UriInfo uriInfo, Origin origin, CoffeeType type) {
         final URI ordersUri = uriInfo.getBaseUriBuilder().path(OrdersResource.class).build();
         return Json.createObjectBuilder()
-                .add("origin", origin)
+                .add("origin", origin.getName())
                 .add("_actions", Json.createObjectBuilder()
                         .add("order-coffee", Json.createObjectBuilder()
                                 .add("method", "POST")
@@ -68,17 +63,17 @@ public class EntityBuilder {
                                 .add("fields", Json.createArrayBuilder()
                                         .add(Json.createObjectBuilder()
                                                 .add("name", "type")
-                                                .add("value", capitalize(type.toLowerCase())))
+                                                .add("value", capitalize(type.name())))
                                         .add(Json.createObjectBuilder()
                                                 .add("name", "origin")
-                                                .add("type", origin))
+                                                .add("type", origin.getName()))
                                 )))
                 .build();
     }
 
-    public JsonObjectBuilder buildType(final String type, final UriInfo uriInfo) {
+    public JsonObjectBuilder buildType(CoffeeType type, UriInfo uriInfo) {
         return Json.createObjectBuilder()
-                .add("type", type)
+                .add("type", capitalize(type.name()))
                 .add("_links", Json.createObjectBuilder()
                         .add("origins", uriInfo.getBaseUriBuilder()
                                 .path(TypesResource.class)
@@ -86,8 +81,7 @@ public class EntityBuilder {
                                 .build(type).toString().toLowerCase()));
     }
 
-    private String capitalize(final String word) {
-        return Character.toUpperCase(word.charAt(0)) + word.substring(1);
+    private String capitalize(String word) {
+        return Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase();
     }
-
 }

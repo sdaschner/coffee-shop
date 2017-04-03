@@ -1,5 +1,8 @@
 package com.sebastian_daschner.coffee_shop.boundary;
 
+import com.sebastian_daschner.coffee_shop.control.EntityBuilder;
+import com.sebastian_daschner.coffee_shop.entity.CoffeeType;
+
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -18,7 +21,7 @@ public class OriginsResource {
     CoffeeShop coffeeShop;
 
     @PathParam("type")
-    String type;
+    CoffeeType type;
 
     @Context
     UriInfo uriInfo;

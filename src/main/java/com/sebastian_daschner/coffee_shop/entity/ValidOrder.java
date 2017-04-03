@@ -1,9 +1,10 @@
 package com.sebastian_daschner.coffee_shop.entity;
 
-import com.sebastian_daschner.coffee_shop.control.CreatedOrderValidator;
+import com.sebastian_daschner.coffee_shop.control.OrderValidator;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -15,9 +16,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({FIELD, METHOD, ANNOTATION_TYPE, PARAMETER})
 @Retention(RUNTIME)
 @NotNull
-@Constraint(validatedBy = CreatedOrderValidator.class)
+@Constraint(validatedBy = OrderValidator.class)
 @Documented
-public @interface Created {
+public @interface ValidOrder {
 
     String message() default "";
 

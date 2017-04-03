@@ -1,9 +1,8 @@
 package com.sebastian_daschner.coffee_shop.boundary;
 
-import com.sebastian_daschner.coffee_shop.entity.Created;
+import com.sebastian_daschner.coffee_shop.control.EntityBuilder;
 import com.sebastian_daschner.coffee_shop.entity.Order;
-import com.sebastian_daschner.coffee_shop.entity.OrderStatus;
-import com.sebastian_daschner.coffee_shop.entity.Updated;
+import com.sebastian_daschner.coffee_shop.entity.ValidOrder;
 
 import javax.inject.Inject;
 import javax.json.JsonObject;
@@ -14,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.stream.Stream;
+import java.util.UUID;
 
 @Path("orders")
 @Produces(MediaType.APPLICATION_JSON)
@@ -30,38 +29,31 @@ public class OrdersResource {
     @Context
     UriInfo uriInfo;
 
-    @POST
-    public Response createOrder(@Valid @Created JsonObject json) {
-        final Order order = createOrderFromJson(json);
-        coffeeShop.createOrder(order);
-        final URI orderUri = uriInfo.getBaseUriBuilder().path(OrdersResource.class).path(OrdersResource.class, "getOrder").build(order.getId());
-        return Response.created(orderUri).build();
-    }
-
     @GET
     @Path("{id}")
-    public JsonObject getOrder(@PathParam("id") String id) {
+    public JsonObject getOrder(@PathParam("id") UUID id) {
         final Order order = coffeeShop.getOrder(id);
-        return entityBuilder.buildOrder(order, uriInfo);
+
+        if (order == null)
+            throw new NotFoundException();
+
+        return entityBuilder.buildOrder(order);
     }
 
-    @PUT
-    @Path("{id}")
-    public void updateOrder(@PathParam("id") String id, @Valid @Updated JsonObject json) {
-        final Order order = createOrderFromJson(json);
-        coffeeShop.updateOrder(id, order);
+    @POST
+    public Response createOrder(@Valid @ValidOrder JsonObject json) {
+        final Order order = entityBuilder.buildOrder(json);
+
+        coffeeShop.createOrder(order);
+
+        return Response.created(buildUri(order)).build();
     }
 
-    private Order createOrderFromJson(final JsonObject json) {
-        final String type = json.getString("type");
-        final String origin = json.getString("origin");
-        final String statusString = json.getString("status", null);
-
-        final OrderStatus status = Stream.of(OrderStatus.values())
-                .filter(s -> s.name().equalsIgnoreCase(statusString))
-                .findAny().orElse(OrderStatus.PREPARING);
-
-        return new Order(null, type, origin, status);
+    private URI buildUri(Order order) {
+        return uriInfo.getBaseUriBuilder()
+                .path(OrdersResource.class)
+                .path(OrdersResource.class, "getOrder")
+                .build(order.getId());
     }
 
 }

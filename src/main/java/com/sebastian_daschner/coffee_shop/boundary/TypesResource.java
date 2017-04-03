@@ -1,5 +1,7 @@
 package com.sebastian_daschner.coffee_shop.boundary;
 
+import com.sebastian_daschner.coffee_shop.control.EntityBuilder;
+
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonArray;

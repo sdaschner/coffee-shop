@@ -1,56 +1,53 @@
 package com.sebastian_daschner.coffee_shop.entity;
 
-import javax.validation.constraints.NotNull;
+import javax.persistence.*;
+import java.util.Objects;
+import java.util.UUID;
 
+@Entity
+@Table(name = "orders")
 public class Order {
 
+    @Id
     private String id;
-    @NotNull
-    private String type;
-    @NotNull
-    private String origin;
-    private OrderStatus status;
+
+    @Basic(optional = false)
+    @Enumerated(EnumType.STRING)
+    private CoffeeType type;
+
+    @ManyToOne(optional = false)
+    private Origin origin;
+
+    @Basic(optional = false)
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status = OrderStatus.PREPARING;
 
     public Order() {
     }
 
-    public Order(final String id, final String type, final String origin, final OrderStatus status) {
-        this.id = id;
+    public Order(UUID id, CoffeeType type, Origin origin) {
+        Objects.requireNonNull(id);
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(origin);
+        this.id = id.toString();
         this.type = type;
         this.origin = origin;
-        this.status = status;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(final String id) {
-        this.id = id;
-    }
-
-    public String getType() {
+    public CoffeeType getType() {
         return type;
     }
 
-    public void setType(final String type) {
-        this.type = type;
-    }
-
-    public String getOrigin() {
+    public Origin getOrigin() {
         return origin;
-    }
-
-    public void setOrigin(final String origin) {
-        this.origin = origin;
     }
 
     public OrderStatus getStatus() {
         return status;
-    }
-
-    public void setStatus(final OrderStatus status) {
-        this.status = status;
     }
 
     @Override
